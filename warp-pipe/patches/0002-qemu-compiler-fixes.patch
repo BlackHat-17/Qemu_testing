@@ -1,0 +1,186 @@
+diff --git a/backends/tpm/tpm_passthrough.c b/backends/tpm/tpm_passthrough.c
+index 179697a3a9..5e0f726d72 100644
+--- a/backends/tpm/tpm_passthrough.c
++++ b/backends/tpm/tpm_passthrough.c
+@@ -211,7 +211,7 @@ static size_t tpm_passthrough_get_buffer_size(TPMBackend *tb)
+ static int tpm_passthrough_open_sysfs_cancel(TPMPassthruState *tpm_pt)
+ {
+     int fd = -1;
+-    char *dev;
++    const char *dev;
+     char path[PATH_MAX];
+ 
+     if (tpm_pt->options->cancel_path) {
+diff --git a/block/vmdk.c b/block/vmdk.c
+index dda783f06b..f8d5b5b43c 100644
+--- a/block/vmdk.c
++++ b/block/vmdk.c
+@@ -1078,7 +1078,7 @@ vmdk_open_vmdk4(BlockDriverState *bs, BdrvChild *file, int flags,
+ static int vmdk_parse_description(const char *desc, const char *opt_name,
+         char *buf, int buf_size)
+ {
+-    char *opt_pos, *opt_end;
++    const char *opt_pos, *opt_end;
+     const char *end = desc + strlen(desc);
+ 
+     opt_pos = strstr(desc, opt_name);
+diff --git a/block/vvfat.c b/block/vvfat.c
+index 9d050ba3ae..0edac3ef64 100644
+--- a/block/vvfat.c
++++ b/block/vvfat.c
+@@ -1824,7 +1824,7 @@ cluster_was_modified(BDRVVVFATState *s, uint32_t cluster_num)
+ 
+ static const char* get_basename(const char* path)
+ {
+-    char* basename = strrchr(path, '/');
++    const char* basename = strrchr(path, '/');
+     if (basename == NULL)
+         return path;
+     else
+diff --git a/gdbstub/gdbstub.c b/gdbstub/gdbstub.c
+index ebb912da1b..3557015df5 100644
+--- a/gdbstub/gdbstub.c
++++ b/gdbstub/gdbstub.c
+@@ -359,7 +359,7 @@ static const char *get_feature_xml(const char *p, const char **newp,
+      * qXfer:features:read:ANNEX:OFFSET,LENGTH'
+      *                     ^p    ^newp
+      */
+-    char *term = strchr(p, ':');
++    const char *term = strchr(p, ':');
+     *newp = term + 1;
+     len = term - p;
+ 
+diff --git a/hw/i386/x86.c b/hw/i386/x86.c
+index b3d054889b..95417bdb7a 100644
+--- a/hw/i386/x86.c
++++ b/hw/i386/x86.c
+@@ -792,7 +792,7 @@ void x86_load_linux(X86MachineState *x86ms,
+     uint8_t header[8192], *setup, *kernel;
+     hwaddr real_addr, prot_addr, cmdline_addr, initrd_addr = 0;
+     FILE *f;
+-    char *vmode;
++    const char *vmode;
+     MachineState *machine = MACHINE(x86ms);
+     struct setup_data *setup_data;
+     const char *kernel_filename = machine->kernel_filename;
+diff --git a/monitor/hmp.c b/monitor/hmp.c
+index 69c1b7e98a..64b1e6a7c2 100644
+--- a/monitor/hmp.c
++++ b/monitor/hmp.c
+@@ -577,10 +577,11 @@ static const char *get_command_name(const char *cmdline,
+  * Read key of 'type' into 'key' and return the current
+  * 'type' pointer.
+  */
+-static char *key_get_info(const char *type, char **key)
++static const char *key_get_info(const char *type, char **key)
+ {
+     size_t len;
+-    char *p, *str;
++    const char *p;
++    char *str;
+ 
+     if (*type == ',') {
+         type++;
+diff --git a/qga/commands-posix.c b/qga/commands-posix.c
+index 6169bbf7a0..cd39f87042 100644
+--- a/qga/commands-posix.c
++++ b/qga/commands-posix.c
+@@ -862,7 +862,8 @@ static bool build_guest_fsinfo_for_pci_dev(char const *syspath,
+     int i, nhosts = 0, pcilen;
+     GuestPCIAddress *pciaddr = disk->pci_controller;
+     bool has_ata = false, has_host = false, has_tgt = false;
+-    char *p, *q, *driver = NULL;
++    const char *p, *q;
++    char *driver = NULL;
+     bool ret = false;
+ 
+     p = strstr(syspath, "/devices/pci");
+@@ -1002,7 +1003,7 @@ static bool build_guest_fsinfo_for_nonpci_virtio(char const *syspath,
+                                                  Error **errp)
+ {
+     unsigned int tgt[3];
+-    char *p;
++    const char *p;
+ 
+     if (!strstr(syspath, "/virtio") || !strstr(syspath, "/block")) {
+         g_debug("Unsupported virtio device '%s'", syspath);
+@@ -1034,7 +1035,7 @@ static bool build_guest_fsinfo_for_ccw_dev(char const *syspath,
+                                            Error **errp)
+ {
+     unsigned int cssid, ssid, subchno, devno;
+-    char *p;
++    const char *p;
+ 
+     p = strstr(syspath, "/devices/css");
+     if (!p || sscanf(p + 12, "%*x/%x.%x.%x/%*x.%*x.%x/",
+diff --git a/tests/vhost-user-bridge.c b/tests/vhost-user-bridge.c
+index a5c711b1de..ce4c3426d3 100644
+--- a/tests/vhost-user-bridge.c
++++ b/tests/vhost-user-bridge.c
+@@ -746,14 +746,12 @@ vubr_run(VubrDev *dev)
+ static int
+ vubr_parse_host_port(const char **host, const char **port, const char *buf)
+ {
+-    char *p = strchr(buf, ':');
+-
+-    if (!p) {
++    g_auto(GStrv) tokens = g_strsplit(buf, ":", 2);
++    if (!tokens[0] || !tokens[1]) {
+         return -1;
+     }
+-    *p = '\0';
+-    *host = strdup(buf);
+-    *port = strdup(p + 1);
++    *host = g_steal_pointer(&tokens[0]);
++    *port = g_steal_pointer(&tokens[1]);
+     return 0;
+ }
+ 
+diff --git a/ui/ui-hmp-cmds.c b/ui/ui-hmp-cmds.c
+index 26c8ced1f2..b0c68c3de3 100644
+--- a/ui/ui-hmp-cmds.c
++++ b/ui/ui-hmp-cmds.c
+@@ -418,7 +418,7 @@ err_out:
+ void sendkey_completion(ReadLineState *rs, int nb_args, const char *str)
+ {
+     int i;
+-    char *sep;
++    const char *sep;
+     size_t len;
+ 
+     if (nb_args != 2) {
+diff --git a/util/log.c b/util/log.c
+index d36c98da0b..54169c343f 100644
+--- a/util/log.c
++++ b/util/log.c
+@@ -185,7 +185,7 @@ static ValidFilenameTemplateResult
+ valid_filename_template(const char *filename, bool per_thread, Error **errp)
+ {
+     if (filename) {
+-        char *pidstr = strstr(filename, "%");
++        const char *pidstr = strstr(filename, "%");
+ 
+         if (pidstr) {
+             /* We only accept one %d, no other format strings */
+diff --git a/util/qemu-sockets.c b/util/qemu-sockets.c
+index 83e84b1186..4f41f1850e 100644
+--- a/util/qemu-sockets.c
++++ b/util/qemu-sockets.c
+@@ -596,7 +596,7 @@ err:
+ static int inet_parse_flag(const char *flagname, const char *optstr, bool *val,
+                            Error **errp)
+ {
+-    char *end;
++    const char *end;
+     size_t len;
+ 
+     end = strstr(optstr, ",");
+@@ -627,7 +627,7 @@ int inet_parse(InetSocketAddress *addr, const char *str, Error **errp)
+     char port[33];
+     int to;
+     int pos;
+-    char *begin;
++    const char *begin;
+ 
+     memset(addr, 0, sizeof(*addr));
+ 

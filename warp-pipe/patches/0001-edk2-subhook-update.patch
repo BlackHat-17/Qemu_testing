@@ -1,0 +1,19 @@
+From 10061d49df4b1af029f95c6061023bbd1a0a62d9 Mon Sep 17 00:00:00 2001
+From: Aditya Waghmare <adityawaghmare1705@gmail.com>
+Date: Mon, 2 Nov 2026 05:36:57 +0000
+Subject: [PATCH] roms/edk2: update Subhook submodule URL
+
+---
+ roms/edk2 | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/roms/edk2 b/roms/edk2
+index 819cfc6b42..95d8a1c255 160000
+--- a/roms/edk2
++++ b/roms/edk2
+@@ -1 +1 @@
+-Subproject commit 819cfc6b42a68790a23509e4fcc58ceb70e1965e
++Subproject commit 95d8a1c255cfb8e063d679930d08ca6426eb5701
+-- 
+2.53.0
+

@@ -1,0 +1,4 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+exec /home/aditya/qemu_x86/build-warp-pipe/pyvenv/bin/meson devenv -C /home/aditya/qemu_x86/build-warp-pipe -w "$PWD" "$@"

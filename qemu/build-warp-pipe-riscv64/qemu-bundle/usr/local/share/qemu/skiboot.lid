@@ -1,0 +1,1 @@
+/home/aditya/qemu/pc-bios/skiboot.lid

@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/aditya/qemu_x86/build-warp-pipe/meson-private/__CMake_compiler_info__/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
