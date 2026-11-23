@@ -264,6 +264,8 @@ typedef struct cxl_device_state {
     uint64_t static_mem_size;
     uint64_t pmem_size;
     uint64_t vmem_size;
+    uint64_t next_vmem_size;
+    uint64_t next_pmem_size;
 
     const struct cxl_cmd (*cxl_cmd_set)[256];
     CXLEventLog event_logs[CXL_EVENT_TYPE_MAX];

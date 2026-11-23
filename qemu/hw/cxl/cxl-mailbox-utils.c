@@ -2223,7 +2223,10 @@ static CXLRetCode cmd_identify_memory_device(const struct cxl_cmd *cmd,
              cxl_dstate->pmem_size / CXL_CAPACITY_MULTIPLIER);
     stq_le_p(&id->volatile_capacity,
              cxl_dstate->vmem_size / CXL_CAPACITY_MULTIPLIER);
+    stq_le_p(&id->partition_align,
+         cxl_dstate->static_mem_size > 0 ? 1 : 0);
     stl_le_p(&id->lsa_size, cvc->get_lsa_size(ct3d));
+   
     /* 256 poison records */
     st24_le_p(id->poison_list_max_mer, 256);
     /* No limit - so limited by main poison record limit */
@@ -2264,10 +2267,19 @@ static CXLRetCode cmd_ccls_get_partition_info(const struct cxl_cmd *cmd,
      * When both next_vmem and next_pmem are 0, there is no pending change to
      * partitioning.
      */
-    stq_le_p(&part_info->next_vmem, 0);
+   /* stq_le_p(&part_info->next_vmem, 0);
     stq_le_p(&part_info->active_pmem,
              cxl_dstate->pmem_size / CXL_CAPACITY_MULTIPLIER);
     stq_le_p(&part_info->next_pmem, 0);
+
+    *len_out = sizeof(*part_info);
+    return CXL_MBOX_SUCCESS;*/
+    stq_le_p(&part_info->next_vmem,
+         cxl_dstate->next_vmem_size / CXL_CAPACITY_MULTIPLIER);
+   stq_le_p(&part_info->active_pmem,
+         cxl_dstate->pmem_size / CXL_CAPACITY_MULTIPLIER);
+    stq_le_p(&part_info->next_pmem,
+         cxl_dstate->next_pmem_size / CXL_CAPACITY_MULTIPLIER);
 
     *len_out = sizeof(*part_info);
     return CXL_MBOX_SUCCESS;
@@ -2279,9 +2291,32 @@ static CXLRetCode cmd_ccls_set_partition_info(const struct cxl_cmd *cmd, uint8_t
     *len_out = 0;
     if (len_in < sizeof(uint64_t)) return CXL_MBOX_INVALID_PAYLOAD_LENGTH;
     uint64_t vcap = ldq_le_p(payload_in);
-    if (vcap > cxl_dstate->static_mem_size / CXL_CAPACITY_MULTIPLIER) return CXL_MBOX_INVALID_INPUT;
+    /*if (vcap > cxl_dstate->static_mem_size / CXL_CAPACITY_MULTIPLIER) return CXL_MBOX_INVALID_INPUT;
     cxl_dstate->vmem_size = vcap * CXL_CAPACITY_MULTIPLIER;
-    cxl_dstate->pmem_size = cxl_dstate->static_mem_size - cxl_dstate->vmem_size;
+    cxl_dstate->pmem_size = cxl_dstate->static_mem_size - cxl_dstate->vmem_size;*/
+    uint8_t flags = payload_in[8];
+    if (vcap > cxl_dstate->static_mem_size / CXL_CAPACITY_MULTIPLIER) {
+        return CXL_MBOX_INVALID_INPUT;
+    }
+    uint64_t new_vmem = vcap * CXL_CAPACITY_MULTIPLIER;
+    uint64_t new_pmem = cxl_dstate->static_mem_size - new_vmem;
+
+    if (flags & 0x1) {
+        /* Immediate partition change */
+        cxl_dstate->vmem_size = new_vmem;
+        cxl_dstate->pmem_size = new_pmem;
+        cxl_dstate->next_vmem_size = 0;
+        cxl_dstate->next_pmem_size = 0;
+    } else if (new_vmem == cxl_dstate->vmem_size &&
+               new_pmem == cxl_dstate->pmem_size) {
+        /* Restoring active layout cancels pending partition change */
+        cxl_dstate->next_vmem_size = 0;
+        cxl_dstate->next_pmem_size = 0;
+    } else {
+        /* Staged for next warm/cold reset */
+        cxl_dstate->next_vmem_size = new_vmem;
+        cxl_dstate->next_pmem_size = new_pmem;
+    }
     return CXL_MBOX_SUCCESS;
 }
 
