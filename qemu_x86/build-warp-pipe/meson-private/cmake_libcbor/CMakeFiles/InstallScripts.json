@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/aditya/qemu_x86/build-warp-pipe/meson-private/cmake_libcbor/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

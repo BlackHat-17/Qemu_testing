@@ -1,8 +1,0 @@
-[options]
-warp_pipe = enabled
-docs = disabled
-plugins = true
-
-[properties]
-native_file = ['/home/aditya/qemu/build-warp-pipe-riscv64/config-meson.cross']
-

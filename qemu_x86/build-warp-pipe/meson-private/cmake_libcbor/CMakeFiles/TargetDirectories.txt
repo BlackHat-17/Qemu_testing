@@ -1,2 +1,0 @@
-/home/aditya/qemu_x86/build-warp-pipe/meson-private/cmake_libcbor/CMakeFiles/edit_cache.dir
-/home/aditya/qemu_x86/build-warp-pipe/meson-private/cmake_libcbor/CMakeFiles/rebuild_cache.dir

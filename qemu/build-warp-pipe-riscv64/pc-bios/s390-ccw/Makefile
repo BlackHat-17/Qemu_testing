@@ -1,1 +1,0 @@
-/home/aditya/qemu/pc-bios/s390-ccw/Makefile
