@@ -16,3 +16,139 @@ zephyr-sdk-0.16.5/
 # Build output directories (if present inside repos)
 build/
 output/
+
+# ==============================================================================
+# Build Directories & Compiled Object Files
+# ==============================================================================
+build/
+build-*/
+out/
+dist/
+*.o
+*.a
+*.so
+*.so.*
+*.lo
+*.la
+*.ko
+*.mod
+*.mod.c
+*.cmd
+*.d
+*.gcno
+*.gcda
+*.gcov
+*.pch
+*.gch
+
+# ==============================================================================
+# Compiled C/C++ Test Binaries & Static RISC-V Executables
+# ==============================================================================
+*.exe
+*.out
+*.elf
+*.bin
+*.img
+*.vmlinux
+Image
+Image.gz
+vmlinux
+System.map
+Module.symvers
+modules.order
+
+# Specific CXL test binaries (track .c / Makefile, ignore compiled outputs)
+cci_full_suite
+test_identify
+test_partition_info
+test_lsa_get
+test_lsa_set
+test_health_info
+test_event_records
+test_set_partition
+set_lsa_permanent
+
+# ==============================================================================
+# QEMU / Kernel / RootFS Disk Images & Runtime Artifacts
+# ==============================================================================
+*.qcow2
+*.raw
+*.ext2
+*.ext3
+*.ext4
+*.cpio
+*.cpio.gz
+*.iso
+*.squashfs
+rootfs*
+initramfs*
+*.sock
+*.pid
+*.monitor
+
+# ==============================================================================
+# Test Logs, Temporary Reports & Dumps
+# ==============================================================================
+*.log
+*_result.txt
+cci_report_*.txt
+cci_report_*.html
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+core
+core.*
+vgcore.*
+
+# ==============================================================================
+# Python / Tooling Cache
+# ==============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# ==============================================================================
+# Linux Kernel / Meson / Ninja Build Metadata
+# ==============================================================================
+.config
+.config.old
+.version
+.tmp_versions/
+include/config/
+include/generated/
+arch/*/include/generated/
+meson-info/
+meson-logs/
+meson-private/
+.ninja_deps
+.ninja_log
+compile_commands.json
+
+# ==============================================================================
+# Archives & Local Backups
+# ==============================================================================
+*.tar
+*.tar.gz
+*.tgz
+*.tar.xz
+*.tar.bz2
+*.zip
+*.7z
+
+# ==============================================================================
+# IDE & OS Metadata
+# ==============================================================================
+.vscode/
+.idea/
+*.code-workspace
+.DS_Store
+Thumbs.db
