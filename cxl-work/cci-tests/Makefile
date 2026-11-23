@@ -1,23 +1,14 @@
-	
-CROSS_COMPILE ?=
-CC = $(CROSS_COMPILE)gcc
+CC := riscv64-linux-gnu-gcc
+CFLAGS := -O2 -Wall -Wextra -static -I$(HOME)/linux/usr/include
+TARGET := cci_full_suite
+SRC := cci_full_suite.c
 
-CFLAGS ?= -O2 -Wall -Wextra -std=c11
+all: $(TARGET)
 
-PROGRAMS = test_identify \
-           test_partition_info \
-           test_lsa_get \
-           test_lsa_set \
-           test_health_info \
-           test_event_records
-
-all: $(PROGRAMS)
-
-%: %.c cxl_test_common.h
+$(TARGET): $(SRC)
 	$(CC) $(CFLAGS) -o $@ $<
 
 clean:
-	rm -f $(PROGRAMS) *.log *_result.txt
+	rm -f $(TARGET) *.log *_result.txt
 
 .PHONY: all clean
-

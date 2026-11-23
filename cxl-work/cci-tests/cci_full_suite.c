@@ -253,19 +253,59 @@ static void run_week5(int fd) {
             record("Week 5", "Events", "Get Event Records (0x0100)", "FAIL", now_sec() - t0, msg);
         }
 
-    /* 6. Set Partition Info (0x4101) */
+    /* 6. Set Partition Info (0x4101) with GET_PARTITION_INFO (0x4100) Staging & Restore Proof */
     t0 = now_sec();
     if (!is_enabled(CXL_MEM_COMMAND_ID_SET_PARTITION_INFO)) {
         record("Week 5", "Partition", "Set Partition Info (0x4101)", "SKIP", now_sec() - t0,
                "SET_PARTITION_INFO not enabled on device");
     } else {
-        memset(in, 0, 10); put_le64(in, active_v);
+        uint8_t part_init[32] = {0}, part_mut[32] = {0}, part_rest[32] = {0};
+        uint32_t part_sz = 0, ret_r0 = 0, ret_r1 = 0, ret_s2 = 0, ret_r2 = 0;
+        int err_r0 = 0, err_r1 = 0, err_s2 = 0, err_r2 = 0;
+
+        int rc_r0 = send_cci(fd, CXL_MEM_COMMAND_ID_GET_PARTITION_INFO, 0, NULL, 0,
+                             part_init, 32, &part_sz, &ret_r0, &err_r0);
+        uint64_t cur_v   = (rc_r0 == 0 && ret_r0 == CCI_RET_SUCCESS && part_sz >= 32) ? get_le64(part_init) : active_v;
+        uint64_t cur_p   = (rc_r0 == 0 && ret_r0 == CCI_RET_SUCCESS && part_sz >= 32) ? get_le64(part_init + 8) : 1ULL;
+        uint64_t total_u = cur_v + cur_p;
+        uint64_t test_v  = (cur_v > 0) ? 0ULL : 1ULL;
+        uint64_t test_p  = total_u - test_v;
+
+        /* Stage new partition (flags = 0 -> takes effect on next reset) */
+        memset(in, 0, 10);
+        put_le64(in, test_v);
         rc = send_cci(fd, CXL_MEM_COMMAND_ID_SET_PARTITION_INFO, 0, in, 10, NULL, 0, NULL, &retval, &err);
-        if (rc == 0 && retval == CCI_RET_SUCCESS) {
-            snprintf(msg, sizeof(msg), "Set volatile partition size to %" PRIu64 "MB succeeded", active_v * 256);
+        int rc_r1 = send_cci(fd, CXL_MEM_COMMAND_ID_GET_PARTITION_INFO, 0, NULL, 0,
+                             part_mut, 32, &part_sz, &ret_r1, &err_r1);
+
+        uint64_t next_v = get_le64(part_mut + 16) * 256ULL;
+        uint64_t next_p = get_le64(part_mut + 24) * 256ULL;
+
+        /* Restore original partition (clears NextVol/NextPMEM back to 0MB) */
+        memset(in, 0, 10);
+        put_le64(in, cur_v);
+        int rc_s2 = send_cci(fd, CXL_MEM_COMMAND_ID_SET_PARTITION_INFO, 0, in, 10, NULL, 0, NULL, &ret_s2, &err_s2);
+        int rc_r2 = send_cci(fd, CXL_MEM_COMMAND_ID_GET_PARTITION_INFO, 0, NULL, 0,
+                             part_rest, 32, &part_sz, &ret_r2, &err_r2);
+
+        uint64_t rest_next_v = get_le64(part_rest + 16) * 256ULL;
+        uint64_t rest_next_p = get_le64(part_rest + 24) * 256ULL;
+
+        if (rc == 0 && retval == CCI_RET_SUCCESS &&
+            rc_r1 == 0 && ret_r1 == CCI_RET_SUCCESS &&
+            next_v == test_v * 256ULL && next_p == test_p * 256ULL &&
+            rc_s2 == 0 && ret_s2 == CCI_RET_SUCCESS &&
+            rc_r2 == 0 && ret_r2 == CCI_RET_SUCCESS &&
+            rest_next_v == 0ULL && rest_next_p == 0ULL) {
+            snprintf(msg, sizeof(msg),
+                     "ioctl(0x4101) rc=0 retval=0x%04x | 0x4100 readback proved staging: "
+                     "Next(Vol=%" PRIu64 "MB PMEM=%" PRIu64 "MB) -> restored Next(Vol=0MB PMEM=0MB)",
+                     retval, next_v, next_p);
             record("Week 5", "Partition", "Set Partition Info (0x4101)", "PASS", now_sec() - t0, msg);
         } else {
-            snprintf(msg, sizeof(msg), "rc=%d errno=%d (%s) retval=0x%04x", rc, err, strerror(err), retval);
+            snprintf(msg, sizeof(msg),
+                     "Staging/restore mismatch: set1(rc=%d,ret=0x%x) Next(Vol=%" PRIu64 "MB,PMEM=%" PRIu64 "MB) restoreNext(Vol=%" PRIu64 "MB)",
+                     rc, retval, next_v, next_p, rest_next_v);
             record("Week 5", "Partition", "Set Partition Info (0x4101)", "FAIL", now_sec() - t0, msg);
         }
     }
